@@ -223,10 +223,10 @@
             <button type="button" data-type="ETF" aria-label="只看 ETF">ETF</button>
           </div>
           <select id="categorySelect" aria-label="按类别筛选">
-            <option value="">全部类别 Category</option>
+            <option value="">类别 Category</option>
           </select>
           <select id="classSelect" aria-label="按资产类别筛选">
-            <option value="">全部 Class</option>
+            <option value="">Class</option>
           </select>
         </div>
         <div class="sort-row">
@@ -622,14 +622,12 @@
             var y = getY();
             var diff = y - lastY;
             if (Math.abs(diff) < 5) return;
-            if (y < 80) {
-              setControlsVisible(true);
-            } else if (diff > 0) {
+            // Scrolling down hides the bar; scrolling back up (or reaching
+            // the top) does NOT bring it back — only the floating button does.
+            if (diff > 0 && y >= 80) {
               var active = document.activeElement;
               var inControls = active ? controlsEl.contains(active) : false;
               if (!inControls) setControlsVisible(false);
-            } else if (diff < 0) {
-              setControlsVisible(true);
             }
             lastY = y;
           });
