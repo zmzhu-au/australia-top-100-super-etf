@@ -80,14 +80,22 @@
         position: sticky; top: 0; z-index: 20;
         margin: 0 -12px; padding: 12px;
         background: var(--bg);
-        transition: transform .3s ease-in-out, opacity .3s ease-in-out;
+        transition: transform .3s ease-in-out, opacity .3s ease-in-out, height .3s ease-in-out, padding-top .3s ease-in-out, padding-bottom .3s ease-in-out, margin-top .3s ease-in-out;
         will-change: transform, opacity;
       }
       @media (min-width: 640px) { #controls { margin: 0 -16px; padding: 12px 16px; } }
       #controls.hidden {
         transform: translateY(-110%); opacity: 0; pointer-events: none;
+        height: 0; min-height: 0; padding-top: 0; padding-bottom: 0;
+        margin-top: 0; margin-bottom: 0; overflow: hidden;
       }
       .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .cat-class { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+      .cat-class select { min-width: 0; }
+      @media (max-width: 639px) {
+        .cat-class { flex: 1 1 100%; }
+        .cat-class select { flex: 1 1 0; max-width: none; }
+      }
       #searchInput {
         width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
         background: var(--surface); color: var(--text); padding: 0 12px; font-size: 14px;
@@ -137,6 +145,7 @@
       td.rank { font-weight: 600; color: var(--rank); }
       td.name { min-width: 13rem; }
       td.name .fname { font-family: var(--font-serif); font-weight: 600; }
+      .code { font-family: var(--font-num); font-weight: 700; margin-right: 6px; }
       td.name a.fname { text-decoration: none; }
       td.name a.fname:hover { text-decoration: underline; }
       td.name .sub { display: block; font-size: 12px; color: var(--dim); }
@@ -222,12 +231,14 @@
             <button type="button" data-type="Super" aria-label="只看 Super">Super</button>
             <button type="button" data-type="ETF" aria-label="只看 ETF">ETF</button>
           </div>
-          <select id="categorySelect" aria-label="按类别筛选">
-            <option value="">类别 Category</option>
-          </select>
-          <select id="classSelect" aria-label="按资产类别筛选">
-            <option value="">Class</option>
-          </select>
+          <div class="cat-class">
+            <select id="categorySelect" aria-label="按 Category 筛选">
+              <option value="">Category</option>
+            </select>
+            <select id="classSelect" aria-label="按 Class 筛选">
+              <option value="">Class</option>
+            </select>
+          </div>
         </div>
         <div class="sort-row">
           <span class="hint">排序 · 点按钮切换方向</span>
@@ -439,9 +450,9 @@
               '<td class="num rank">' + (i + 1) + "</td>" +
               '<td class="name">' +
                 (f.sourceUrl
-                  ? '<a class="fname" href="' + esc(f.sourceUrl) + '" target="_blank" rel="noreferrer">' + esc(f.name) + "</a>"
-                  : '<span class="fname">' + esc(f.name) + "</span>") +
-                '<span class="sub">' + esc(f.provider) + (f.ticker ? " · " + esc(f.ticker) : "") + (f.inceptionDate ? " · 成立 " + esc(f.inceptionDate) : "") + "</span>" +
+                  ? '<a class="fname" href="' + esc(f.sourceUrl) + '" target="_blank" rel="noreferrer">' + (f.fundType === "ETF" && f.ticker ? '<strong class="code">' + esc(f.ticker) + "</strong>" : "") + esc(f.name) + "</a>"
+                  : '<span class="fname">' + (f.fundType === "ETF" && f.ticker ? '<strong class="code">' + esc(f.ticker) + "</strong>" : "") + esc(f.name) + "</span>") +
+                '<span class="sub">' + esc(f.provider) + (f.ticker && f.fundType !== "ETF" ? " · " + esc(f.ticker) : "") + (f.inceptionDate ? " · 成立 " + esc(f.inceptionDate) : "") + "</span>" +
               "</td>" +
               "<td>" + (f.fundType === "Super"
                 ? '<span class="badge badge-super">Super</span>'
@@ -471,10 +482,10 @@
               '<div class="card-top"><div>' +
                 '<p class="card-name"><span class="num rk">#' + (i + 1) + "</span>" +
                   (f.sourceUrl
-                    ? '<a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noreferrer">' + esc(f.name) + "</a>"
-                    : esc(f.name)) +
+                    ? '<a href="' + esc(f.sourceUrl) + '" target="_blank" rel="noreferrer">' + (f.fundType === "ETF" && f.ticker ? '<strong class="code">' + esc(f.ticker) + "</strong>" : "") + esc(f.name) + "</a>"
+                    : (f.fundType === "ETF" && f.ticker ? '<strong class="code">' + esc(f.ticker) + "</strong>" : "") + esc(f.name)) +
                 "</p>" +
-                '<p class="card-sub">' + esc(f.provider) + (f.ticker ? " · " + esc(f.ticker) : "") + " · " + esc(f.category || f.assetClass || "—") + "</p>" +
+                '<p class="card-sub">' + esc(f.provider) + (f.ticker && f.fundType !== "ETF" ? " · " + esc(f.ticker) : "") + " · " + esc(f.category || f.assetClass || "—") + "</p>" +
               "</div>" +
               (f.fundType === "Super"
                 ? '<span class="badge badge-super">Super</span>'
