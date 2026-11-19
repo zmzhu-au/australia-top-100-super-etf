@@ -33,8 +33,13 @@ h1{font-family:var(--font-serif);font-size:24px;font-weight:600;margin:8px 0 0}
 .lede{margin:8px 0 0;max-width:48rem;font-size:14px;line-height:1.65;color:var(--dim)}
 .cfsline{margin:4px 0 0;font-size:14px;color:var(--dim)}
 .cfsline a{color:var(--accent);text-underline-offset:2px}
-.controls{position:sticky;top:0;z-index:20;background:var(--bg);margin:0 -12px;padding:12px}
+.controls{position:sticky;top:0;z-index:20;background:var(--bg);margin:0 -12px;padding:12px;transition:transform .3s ease,opacity .25s ease,visibility 0s linear 0s;will-change:transform}
 @media(min-width:640px){.controls{margin:0 -16px;padding:12px 16px}}
+.controls.is-hidden{transform:translateY(calc(-100% - 6px));opacity:0;visibility:hidden;pointer-events:none;transition:transform .3s ease,opacity .25s ease,visibility 0s linear .3s}
+.reveal-btn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translate(-50%,-10px);z-index:30;display:inline-flex;align-items:center;gap:6px;min-height:2.25rem;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.16);cursor:pointer;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s ease,transform .25s ease,visibility 0s linear .25s}
+.reveal-btn.show{opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,0);transition:opacity .25s ease,transform .25s ease,visibility 0s linear 0s}
+.reveal-btn svg{width:14px;height:14px;flex-shrink:0}
+@media (prefers-reduced-motion: reduce){.controls,.reveal-btn{transition:none}}
 .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .search{width:100%;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);padding:0 12px;font-size:14px;color:var(--text)}
 @media(min-width:640px){.search{width:16rem}}
@@ -126,6 +131,12 @@ footer p{margin:0 0 4px}
       <span class="current" id="currentLabel"></span>
     </div>
   </section>
+
+  <button type="button" class="reveal-btn" id="revealControls" aria-label="显示筛选与排序" aria-hidden="true" tabindex="-1">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="9" cy="7" r="2.2" fill="var(--surface)"/><line x1="4" y1="17" x2="20" y2="17"/><circle cx="15" cy="17" r="2.2" fill="var(--surface)"/></svg>
+    筛选与排序
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:12px;height:12px"><polyline points="6 15 12 9 18 15"/></svg>
+  </button>
 
   <p class="count" id="countLine"></p>
   <div id="content"></div>
@@ -293,6 +304,54 @@ function render(){
     document.getElementById("search").value=""; catSel.value=""; clsSel.value=""; render();
   });
   render();
+})();
+
+// Auto-hide the sticky filter/sort bar while scrolling down to read the
+// list; bring it back as soon as the user scrolls up (or returns near
+// the top). Hiding uses transform only, so the page never jumps.
+(function(){
+  var controls=document.querySelector(".controls");
+  var revealBtn=document.getElementById("revealControls");
+  if(!controls||!revealBtn) return;
+  var hidden=false, lastY=window.scrollY||0, downAcc=0, upAcc=0, ticking=false;
+  function setHidden(next){
+    if(next===hidden) return;
+    hidden=next;
+    controls.classList.toggle("is-hidden", next);
+    if(next){ controls.setAttribute("aria-hidden","true"); controls.inert=true; }
+    else { controls.removeAttribute("aria-hidden"); controls.inert=false; }
+    revealBtn.classList.toggle("show", next);
+    revealBtn.setAttribute("aria-hidden", next?"false":"true");
+    revealBtn.tabIndex = next ? 0 : -1;
+  }
+  revealBtn.tabIndex=-1;
+  function onScroll(){
+    var y=window.scrollY||0;
+    if(y<0) y=0;
+    var dy=y-lastY;
+    lastY=y;
+    if(dy>0){ downAcc+=dy; upAcc=0; }
+    else if(dy<0){ upAcc+=-dy; downAcc=0; }
+    if(y<140){ setHidden(false); downAcc=0; upAcc=0; return; }
+    if(!hidden && downAcc>48 && y>220){
+      // Don't hide while the user is typing / interacting inside the bar.
+      if(!controls.contains(document.activeElement)) setHidden(true);
+    } else if(hidden && upAcc>18){
+      setHidden(false);
+    }
+    ticking=false;
+  }
+  window.addEventListener("scroll", function(){
+    if(!ticking){ ticking=true; window.requestAnimationFrame(onScroll); }
+  }, {passive:true});
+  revealBtn.addEventListener("click", function(){
+    setHidden(false);
+    downAcc=0; upAcc=0;
+    var s=document.getElementById("search");
+    if(s) s.focus({preventScroll:true});
+  });
+  // If focus somehow lands inside the bar while hidden, show it again.
+  controls.addEventListener("focusin", function(){ if(hidden) setHidden(false); });
 })();
 </script>
 </body>
