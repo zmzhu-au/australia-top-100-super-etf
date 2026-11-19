@@ -214,16 +214,6 @@
       <section class="head">
         <p class="kicker">澳洲Super × ASX ETF · 前 100 名数据，截至 31 Oct 2026 · 更新于 2026/11/20</p>
         <h1>Australia Top 100 Super and ETFs</h1>
-        <p class="intro">
-          覆盖澳洲十大 Super 基金（AustralianSuper、ART、Aware、UniSuper、Hostplus、CFS、Cbus、REST、HESTA、MLC）的投资选项与全部 ASX 上市 ETF，
-          数据源自 Morningstar 及其授权发布渠道与各基金官网。前 100 名按当前所选排序字段选入（默认 1 个月回报），
-          切换排序字段或方向，入选名单随之改变。1 年以上回报为年化（p.a.），过往业绩不代表未来表现。
-        </p>
-        <p class="cfs">
-          CFS 业绩来源：
-          <a href="https://www.colonialfirststate.com.au/Price_performance/performanceNPrice.aspx?menutabtype=performance&amp;CompanyCode=001&amp;Public=1&amp;MainGroup=SF&amp;BrandName=FC&amp;ProductIDs=11&amp;Product=FirstChoice+Wholesale+Personal+Super&amp;ACCodes=&amp;ACText=&amp;SearchType=Performance&amp;Multi=False&amp;Hedge=False&amp;IvstType=Superannuation+products&amp;IvstGroup=&amp;APIR=&amp;FundIDs=&amp;FundName=&amp;FundNames=&amp;SearchProdIDs=&amp;Redirect=1" target="_blank" rel="noreferrer">Colonial First State 官方业绩页 — FirstChoice Wholesale Personal Super（Performance）</a>
-          （刷新时以此页为准全量读取 CFS 选项）
-        </p>
       </section>
 
       <button type="button" id="showControlsBtn" aria-label="显示筛选和排序">筛选与排序</button>
@@ -303,7 +293,7 @@
           { key: "retInception", label: "成立以来" }
         ];
         var ALL_SORTS = PERIODS.concat([
-          { key: "icr", label: "ICR" },
+          { key: "icr", label: "ICR or MER" },
           { key: "sizeM", label: "规模" }
         ]);
 
@@ -362,7 +352,7 @@
           for (var i = 0; i < PERIODS.length; i++) {
             if (PERIODS[i].key === k) return PERIODS[i].label + " · " + (d === -1 ? "从高到低" : "从低到高");
           }
-          if (k === "icr") return "ICR · " + (d === 1 ? "从低到高" : "从高到低");
+          if (k === "icr") return "ICR or MER · " + (d === 1 ? "从低到高" : "从高到低");
           if (k === "sizeM") return "规模 · " + (d === -1 ? "从大到小" : "从小到大");
           if (k === "name") return "名称 · " + (d === 1 ? "A→Z" : "Z→A");
           return "";
@@ -455,7 +445,7 @@
             '<th class="left">名称</th>' +
             '<th class="left">类型</th>' +
             '<th class="left">类别 / Class</th>' +
-            '<th class="num-h sortable" data-sort="icr">ICR' + sortMark("icr") + "</th>" +
+            '<th class="num-h sortable" data-sort="icr">ICR or MER' + sortMark("icr") + "</th>" +
             '<th class="num-h sortable" data-sort="sizeM">规模' + sortMark("sizeM") + "</th>";
           PERIODS.forEach(function (p) {
             var active = p.key === state.sortKey;
@@ -513,7 +503,7 @@
               "</div>" +
               '<div class="card-hero">' +
                 '<p class="num big ' + pctClass(f[hero.key]) + '" style="margin:0">' + fmtPct(f[hero.key]) + '<span class="lbl">' + hero.label + (heroAnnual ? " p.a." : "") + "</span></p>" +
-                '<p class="num meta" style="margin:0">' + (f.icr != null ? "ICR " + f.icr.toFixed(2) + "%" : "ICR —") + "</p>" +
+                '<p class="num meta" style="margin:0">' + (f.icr != null ? (f.fundType === "Super" ? "MER " : "ICR ") + f.icr.toFixed(2) + "%" : (f.fundType === "Super" ? "MER —" : "ICR —")) + "</p>" +
                 '<p class="num meta" style="margin:0">' + fmtSize(f.sizeM) + "</p>" +
               "</div>" +
               '<div class="card-grid num">';
