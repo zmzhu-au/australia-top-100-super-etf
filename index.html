@@ -41,6 +41,10 @@
         }
       }
       * { box-sizing: border-box; }
+      /* No scroll anchoring: the controls bar changes height when it hides /
+         shows, and anchoring would answer that shift by moving scrollTop,
+         which the auto-hide logic would then misread as a downward scroll. */
+      html, body { overflow-anchor: none; }
       body {
         margin: 0;
         background: var(--bg);
@@ -90,11 +94,11 @@
         margin-top: 0; margin-bottom: 0; overflow: hidden;
       }
       .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-      .cat-class { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
-      .cat-class select { min-width: 0; }
+      .cat-class, .provider-class { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+      .cat-class select, .provider-class select { min-width: 0; }
       @media (max-width: 639px) {
-        .cat-class { flex: 1 1 100%; }
-        .cat-class select { flex: 1 1 0; max-width: none; }
+        .cat-class, .provider-class { flex: 1 1 100%; }
+        .cat-class select, .provider-class select { flex: 1 1 0; max-width: none; }
       }
       #searchInput {
         width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
@@ -239,6 +243,14 @@
               <option value="">Class</option>
             </select>
           </div>
+          <div class="provider-class">
+            <select id="superProviderSelect" aria-label="按 Super 公司筛选">
+              <option value="">Super公司</option>
+            </select>
+            <select id="etfProviderSelect" aria-label="按 ETF 基金公司筛选">
+              <option value="">ETF基金公司</option>
+            </select>
+          </div>
         </div>
         <div class="sort-row">
           <span class="hint">排序 · 点按钮切换方向</span>
@@ -297,6 +309,8 @@
           typeFilter: "all",
           category: "",
           assetClass: "",
+          superProvider: "",
+          etfProvider: "",
           sortKey: "ret1m",
           sortDir: -1
         };
@@ -363,6 +377,8 @@
             if (state.typeFilter !== "all" && f.fundType !== state.typeFilter) return false;
             if (state.category && f.category !== state.category) return false;
             if (state.assetClass && f.assetClass !== state.assetClass) return false;
+            if (state.superProvider && !(f.fundType === "Super" && f.provider === state.superProvider)) return false;
+            if (state.etfProvider && !(f.fundType === "ETF" && f.provider === state.etfProvider)) return false;
             if (s) {
               var hay = (f.name + " " + (f.ticker || "") + " " + f.provider).toLowerCase();
               if (hay.indexOf(s) === -1) return false;
@@ -551,21 +567,35 @@
             el.appendChild(o);
           });
         }
-        var catSet = {}, classSet = {};
+        var catSet = {}, classSet = {}, superProviderSet = {}, etfProviderSet = {};
         FUNDS.forEach(function (f) {
           if (f.category) catSet[f.category] = true;
           if (f.assetClass) classSet[f.assetClass] = true;
+          if (f.provider && f.fundType === "Super") superProviderSet[f.provider] = true;
+          if (f.provider && f.fundType === "ETF") etfProviderSet[f.provider] = true;
         });
         var categorySelect = document.getElementById("categorySelect");
         var classSelect = document.getElementById("classSelect");
+        var superProviderSelect = document.getElementById("superProviderSelect");
+        var etfProviderSelect = document.getElementById("etfProviderSelect");
         fillSelect(categorySelect, Object.keys(catSet).sort());
         fillSelect(classSelect, Object.keys(classSet).sort());
+        fillSelect(superProviderSelect, Object.keys(superProviderSet).sort());
+        fillSelect(etfProviderSelect, Object.keys(etfProviderSet).sort());
         categorySelect.addEventListener("change", function () {
           state.category = categorySelect.value;
           render();
         });
         classSelect.addEventListener("change", function () {
           state.assetClass = classSelect.value;
+          render();
+        });
+        superProviderSelect.addEventListener("change", function () {
+          state.superProvider = superProviderSelect.value;
+          render();
+        });
+        etfProviderSelect.addEventListener("change", function () {
+          state.etfProvider = etfProviderSelect.value;
           render();
         });
 
@@ -578,6 +608,10 @@
           categorySelect.value = "";
           state.assetClass = "";
           classSelect.value = "";
+          state.superProvider = "";
+          superProviderSelect.value = "";
+          state.etfProvider = "";
+          etfProviderSelect.value = "";
           render();
         });
 
@@ -603,6 +637,10 @@
         var controlsVisible = true;
         var scroller = null;
         var lastY = 0;
+        // Set when the bar is explicitly re-shown (floating button): scroll
+        // events caused by the bar's own height change while it expands must
+        // not be mistaken for a downward scroll that hides it again.
+        var showLockUntil = 0;
 
         function setControlsVisible(v) {
           if (v === controlsVisible) return;
@@ -631,6 +669,7 @@
           window.requestAnimationFrame(function () {
             ticking = false;
             var y = getY();
+            if (Date.now() < showLockUntil) { lastY = y; return; }
             var diff = y - lastY;
             if (Math.abs(diff) < 5) return;
             // Scrolling down hides the bar; scrolling back up (or reaching
@@ -647,14 +686,21 @@
         scroller = findScroller();
         lastY = getY();
         if (scroller) {
+          scroller.style.overflowAnchor = "none";
           scroller.addEventListener("scroll", onScroll, { passive: true });
         } else {
           window.addEventListener("scroll", onScroll, { passive: true });
         }
 
         showBtn.addEventListener("click", function () {
-          lastY = getY();
+          // Show the bar and hold it: expanding the bar shifts the layout,
+          // which can move scrollTop and fire scroll events — ignore those
+          // until the expand transition has settled, then re-sync lastY so
+          // later genuine scrolls are measured from the settled position.
+          showLockUntil = Date.now() + 800;
           setControlsVisible(true);
+          lastY = getY();
+          window.setTimeout(function () { lastY = getY(); }, 400);
         });
         controlsEl.addEventListener("focusin", function () {
           setControlsVisible(true);
