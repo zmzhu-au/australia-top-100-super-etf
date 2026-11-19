@@ -94,6 +94,7 @@
         margin-top: 0; margin-bottom: 0; overflow: hidden;
       }
       .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .provider-row { margin-top: 8px; }
       .cat-class, .provider-class { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
       .cat-class select, .provider-class select { min-width: 0; }
       @media (max-width: 639px) {
@@ -243,12 +244,14 @@
               <option value="">Class</option>
             </select>
           </div>
+        </div>
+        <div class="controls-row provider-row">
           <div class="provider-class">
-            <select id="superProviderSelect" aria-label="按 Super 公司筛选">
-              <option value="">Super公司</option>
+            <select id="superProviderSelect" aria-label="按 Super 筛选">
+              <option value="">Super</option>
             </select>
-            <select id="etfProviderSelect" aria-label="按 ETF 基金公司筛选">
-              <option value="">ETF基金公司</option>
+            <select id="etfProviderSelect" aria-label="按 ETF 筛选">
+              <option value="">ETF</option>
             </select>
           </div>
         </div>
@@ -314,6 +317,7 @@
           sortKey: "ret1m",
           sortDir: -1
         };
+        var filteredCount = FUNDS.length;
 
         function fmtPct(v) {
           if (v == null) return "—";
@@ -525,6 +529,8 @@
         function render() {
           renderSortBar();
           var res = getFiltered();
+          filteredCount = res.list.length;
+          if (filteredCount < 10 && typeof setControlsVisible === "function") setControlsVisible(true);
           if (res.list.length === 0) {
             statusLineEl.textContent = "";
             theadEl.innerHTML = "";
@@ -669,6 +675,7 @@
           window.requestAnimationFrame(function () {
             ticking = false;
             var y = getY();
+            if (filteredCount < 10) { if (!controlsVisible) setControlsVisible(true); lastY = y; return; }
             if (Date.now() < showLockUntil) { lastY = y; return; }
             var diff = y - lastY;
             if (Math.abs(diff) < 5) return;
