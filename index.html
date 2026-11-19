@@ -94,12 +94,20 @@
         margin-top: 0; margin-bottom: 0; overflow: hidden;
       }
       .controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-      .provider-row { margin-top: 8px; }
-      .cat-class, .provider-class { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
-      .cat-class select, .provider-class select { min-width: 0; }
+      .filter-selects { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex: 1 1 auto; min-width: 0; }
+      .filter-selects select { flex: 1 1 0; min-width: 0; width: 100%; }
+      #controls .filter-selects select { max-width: none; }
+      @media (min-width: 1024px) {
+        .controls-row { flex-wrap: nowrap; }
+        #searchInput { flex: 0 1 15rem; }
+        .seg { flex-shrink: 0; }
+      }
+      @media (max-width: 1023px) {
+        .filter-selects { flex: 1 1 100%; }
+      }
       @media (max-width: 639px) {
-        .cat-class, .provider-class { flex: 1 1 100%; }
-        .cat-class select, .provider-class select { flex: 1 1 0; max-width: none; }
+        .filter-selects { flex-wrap: wrap; }
+        .filter-selects select { flex: 1 1 calc(50% - 4px); }
       }
       #searchInput {
         width: 100%; border: 1px solid var(--border); border-radius: var(--radius);
@@ -212,7 +220,6 @@
   <body>
     <main>
       <section class="head">
-        <p class="kicker">澳洲Super × ASX ETF · 前 100 名数据，截至 31 Oct 2026 · 更新于 2026/11/20</p>
         <h1>Australia Top 100 Super and ETFs</h1>
       </section>
 
@@ -226,17 +233,13 @@
             <button type="button" data-type="Super" aria-label="只看 Super">Super</button>
             <button type="button" data-type="ETF" aria-label="只看 ETF">ETF</button>
           </div>
-          <div class="cat-class">
-            <select id="categorySelect" aria-label="按 Category 筛选">
-              <option value="">Category</option>
+          <div class="filter-selects">
+            <select id="categorySelect" aria-label="按类别筛选">
+              <option value="">类别</option>
             </select>
-            <select id="classSelect" aria-label="按 Class 筛选">
-              <option value="">Class</option>
+            <select id="classSelect" aria-label="按资产类别筛选">
+              <option value="">资产类别</option>
             </select>
-          </div>
-        </div>
-        <div class="controls-row provider-row">
-          <div class="provider-class">
             <select id="superProviderSelect" aria-label="按 Super 筛选">
               <option value="">Super</option>
             </select>
@@ -444,7 +447,7 @@
             '<th class="left sortable" data-sort="rank">排名' + sortMark("rank") + "</th>" +
             '<th class="left">名称</th>' +
             '<th class="left">类型</th>' +
-            '<th class="left">类别 / Class</th>' +
+            '<th class="left">类别 / 资产类别</th>' +
             '<th class="num-h sortable" data-sort="icr">ICR or MER' + sortMark("icr") + "</th>" +
             '<th class="num-h sortable" data-sort="sizeM">规模' + sortMark("sizeM") + "</th>";
           PERIODS.forEach(function (p) {
