@@ -125,20 +125,6 @@
         max-width: 11rem; border: 1px solid var(--border); border-radius: var(--radius);
         background: var(--surface); color: var(--text); padding: 0 8px; font-size: 14px;
       }
-      .sort-row { margin-top: 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 14px; }
-      .sort-row .hint { color: var(--dim); flex-shrink: 0; }
-      .sort-btns { display: flex; flex-wrap: wrap; gap: 6px; }
-      .sort-btn {
-        border: 1px solid var(--border); border-radius: var(--radius);
-        background: var(--surface); color: var(--text);
-        padding: 0 10px; font-size: 14px; white-space: nowrap; cursor: pointer;
-      }
-      .sort-btn.active { border-color: var(--accent); background: var(--accent); color: #fff; font-weight: 600; }
-      @media (prefers-color-scheme: dark) { .sort-btn.active { color: #101511; } }
-      .sort-btn .dir-dim { color: var(--dim); }
-      .sort-btn.active .dir-dim { color: inherit; }
-      .sort-current { color: var(--dim); }
-
       .status-line { padding-bottom: 8px; font-size: 14px; color: var(--dim); margin: 0; }
 
       /* Desktop table */
@@ -247,11 +233,6 @@
               <option value="">ETF</option>
             </select>
           </div>
-        </div>
-        <div class="sort-row">
-          <span class="hint">排序 · 点按钮切换方向</span>
-          <div class="sort-btns" id="sortBtns" role="group" aria-label="排序方式，每个字段一个按钮，点击切换从高到低或从低到高"></div>
-          <span class="sort-current" id="sortCurrent"></span>
         </div>
       </section>
 
@@ -406,8 +387,6 @@
           return { list: list.slice(0, 100), total: total };
         }
 
-        var sortBtnsEl = document.getElementById("sortBtns");
-        var sortCurrentEl = document.getElementById("sortCurrent");
         var statusLineEl = document.getElementById("statusLine");
         var theadEl = document.getElementById("thead");
         var tbodyEl = document.getElementById("tbody");
@@ -418,28 +397,6 @@
         function sortMark(key) {
           if (key !== state.sortKey) return "";
           return state.sortDir === -1 ? " ↓" : " ↑";
-        }
-
-        function renderSortBar() {
-          var html = "";
-          ALL_SORTS.forEach(function (opt) {
-            var active = opt.key === state.sortKey;
-            var label = opt.key === "ret3y" ? "3年" : opt.label;
-            var aria;
-            if (active) {
-              aria = "当前按" + opt.label + dirLabel(opt.key, state.sortDir) + "排序，点击切换为" + dirLabel(opt.key, state.sortDir === -1 ? 1 : -1);
-            } else {
-              aria = "按" + opt.label + "排序，点击后按" + ((opt.key === "name" || opt.key === "icr") ? "低→高" : "高→低") + "，再点切换方向";
-            }
-            html += '<button type="button" class="sort-btn' + (active ? " active" : "") + '" data-sort="' + opt.key + '" aria-pressed="' + active + '" aria-label="' + esc(aria) + '">' +
-              esc(label) +
-              (active
-                ? '<span class="num"> ' + dirArrow(state.sortDir) + " " + dirLabel(opt.key, state.sortDir) + " ⇄</span>"
-                : '<span class="dir-dim" aria-hidden="true"> ⇄</span>') +
-              "</button>";
-          });
-          sortBtnsEl.innerHTML = html;
-          sortCurrentEl.textContent = "当前：" + sortLabel();
         }
 
         function renderTable(list) {
@@ -520,7 +477,6 @@
         }
 
         function render() {
-          renderSortBar();
           var res = getFiltered();
           filteredCount = res.list.length;
           if (filteredCount < 10 && typeof setControlsVisible === "function") setControlsVisible(true);
